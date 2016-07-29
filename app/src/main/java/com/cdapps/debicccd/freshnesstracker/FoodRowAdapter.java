@@ -5,30 +5,52 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import java.util.ArrayList;
+
 /**
  * Created by Spidey7003 on 7/28/2016.
  */
 public class FoodRowAdapter extends BaseAdapter{
 
+    private ArrayList<FoodRowView> mRows;
+
     private Context mContext;
 
     public FoodRowAdapter(Context context){
         mContext = context;
+        mRows = new ArrayList<FoodRowView>();
+    }
+
+    public void addRow(String name, String startDate, String endDate){
+        FoodRowView v = new FoodRowView(mContext);
+        v.setName(name);
+        v.setStartDate(startDate);
+        v.setEndDate(endDate);
+
+        mRows.add(v);
     }
 
     @Override
     public int getCount() {
-        return 5;
+        return mRows.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return null;
+        if(position >= mRows.size()){
+            return null;
+        }
+
+        return mRows.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        if(position >= mRows.size()){
+            return 0;
+        }
+
+        return mRows.get(position).getId();
     }
 
     @Override
@@ -37,7 +59,9 @@ public class FoodRowAdapter extends BaseAdapter{
 
         if(convertView == null){
             v = new FoodRowView(mContext);
-            v.setName("Food " + position);
+            if(position < mRows.size()){
+                v = mRows.get(position);
+            }
         } else {
             v = (FoodRowView) convertView;
         }

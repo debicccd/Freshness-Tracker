@@ -1,16 +1,24 @@
 package com.cdapps.debicccd.freshnesstracker;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ListView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 public class ListActivity extends AppCompatActivity {
+
+    private FoodRowAdapter mRowAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,16 +31,15 @@ public class ListActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                showAddFoodDialog();
             }
         });
 
         final ListView listView = (ListView) findViewById(R.id.listView);
 
-        final FoodRowAdapter rowAdapter = new FoodRowAdapter(this);
+        mRowAdapter = new FoodRowAdapter(this);
 
-        listView.setAdapter(rowAdapter);
+        listView.setAdapter(mRowAdapter);
 
     }
 
@@ -56,5 +63,34 @@ public class ListActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void showAddFoodDialog(){
+        final Dialog addFoodDialog = new Dialog(this);
+        addFoodDialog.setContentView(R.layout.add_food_dialog);
+        addFoodDialog.setTitle("Add New Food");
+
+        Button confirmButton = (Button) addFoodDialog.findViewById(R.id.confirmButton);
+
+        final EditText nameEditText = (EditText) addFoodDialog.findViewById(R.id.foodNameDialogTextView);
+        final DatePicker endDatePicker = (DatePicker) addFoodDialog.findViewById(R.id.datePicker);
+
+        confirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = Calendar.getInstance();
+                SimpleDateFormat mdformat = new SimpleDateFormat("MM/dd/yyyy");
+                String startDate = mdformat.format(calendar.getTime());
+
+                String endDate = (endDatePicker.getMonth() + 1) + "/";
+                endDate += endDatePicker.getDayOfMonth() + "/";
+                endDate += endDatePicker.getYear();
+
+                mRowAdapter.addRow(nameEditText.getText().toString(), startDate, endDate);
+                mRowAdapter.notifyDataSetChanged();
+                addFoodDialog.dismiss();
+            }
+        });
+        addFoodDialog.show();
     }
 }
