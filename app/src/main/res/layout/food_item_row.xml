@@ -8,7 +8,9 @@
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
         android:id="@+id/imageView"
-        android:src="@mipmap/ic_launcher"/>
+        android:src="@mipmap/ic_launcher"
+        android:maxHeight="80dp"
+        android:maxWidth="80dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -16,7 +18,8 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Medium Text"
         android:id="@+id/nameTextView"
-        android:gravity="center_vertical"/>
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"/>
 
     <RelativeLayout
         android:orientation="horizontal"

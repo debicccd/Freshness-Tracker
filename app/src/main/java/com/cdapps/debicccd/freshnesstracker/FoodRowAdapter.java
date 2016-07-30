@@ -1,6 +1,7 @@
 package com.cdapps.debicccd.freshnesstracker;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -21,11 +22,12 @@ public class FoodRowAdapter extends BaseAdapter{
         mRows = new ArrayList<FoodRowView>();
     }
 
-    public void addRow(String name, String startDate, String endDate){
+    public void addRow(String name, String startDate, String endDate, Uri uri){
         FoodRowView v = new FoodRowView(mContext);
         v.setName(name);
         v.setStartDate(startDate);
         v.setEndDate(endDate);
+        v.setPictureUri(uri, mContext);
 
         mRows.add(v);
     }
