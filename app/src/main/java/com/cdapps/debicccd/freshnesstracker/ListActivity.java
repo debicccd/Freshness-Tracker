@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 public class ListActivity extends AppCompatActivity {
     protected static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 0;
@@ -35,6 +36,7 @@ public class ListActivity extends AppCompatActivity {
     private Context mContext;
     private Uri mPictureUri = Uri.parse("@mipmap/ic_launcher");
     private ImageButton mImageButton;
+    private DBHandler mDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,14 @@ public class ListActivity extends AppCompatActivity {
 
         mContext = this;
 
+        mDB = new DBHandler(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        this.restoreRows();
     }
 
     @Override
@@ -105,10 +115,18 @@ public class ListActivity extends AppCompatActivity {
                 endDate += endDatePicker.getDayOfMonth() + "/";
                 endDate += endDatePicker.getYear();
 
+                FoodRowView foodRowView = new FoodRowView(mContext);
 
+                foodRowView.setName(nameEditText.getText().toString());
+                foodRowView.setPictureUri(mPictureUri, mContext);
+                foodRowView.setStartDate(startDate);
+                foodRowView.setEndDate(endDate);
 
-                mRowAdapter.addRow(nameEditText.getText().toString(), startDate, endDate, mPictureUri);
+                mRowAdapter.addRow(foodRowView);
                 mRowAdapter.notifyDataSetChanged();
+
+                mDB.addFoodRowView(foodRowView);
+
                 addFoodDialog.dismiss();
             }
         });
@@ -160,7 +178,7 @@ public class ListActivity extends AppCompatActivity {
 
     private static File getOutputMediaFile(){
         File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "CameraDemo");
+                Environment.DIRECTORY_PICTURES), "FreshnessKeeper");
 
         if (!mediaStorageDir.exists()){
             if (!mediaStorageDir.mkdirs()){
@@ -173,5 +191,13 @@ public class ListActivity extends AppCompatActivity {
         String timeStamp = mdformat.format(calendar.getTime());
 
         return new File(mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp + ".jpg");
+    }
+
+    private void restoreRows(){
+        List<FoodRowView> rows = mDB.getAll();
+
+        for(FoodRowView row : rows){
+            mRowAdapter.addRow(row);
+        }
     }
 }

@@ -70,4 +70,8 @@ public class FoodRowAdapter extends BaseAdapter{
 
         return v;
     }
+
+    public void addRow(FoodRowView row) {
+        this.mRows.add(row);
+    }
 }

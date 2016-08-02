@@ -23,6 +23,7 @@ public class FoodRowView extends LinearLayout{
     private TextView mStartDateTextView;
     private TextView mEndDateTextView;
     private Uri mPictureUri;
+    private int mID;
 
     public FoodRowView(Context context){
         super(context);
@@ -61,5 +62,49 @@ public class FoodRowView extends LinearLayout{
         int nh = (int) ( bitmapImage.getHeight() * (MAX_SIZE / bitmapImage.getWidth()) );
         Bitmap scaled = Bitmap.createScaledBitmap(bitmapImage, (int) MAX_SIZE, nh, true);
         mImageView.setImageBitmap(scaled);
+    }
+
+    public ImageView getImageView() {
+        return mImageView;
+    }
+
+    public TextView getNameTextView() {
+        return mNameTextView;
+    }
+
+    public TextView getStartDateTextView() {
+        return mStartDateTextView;
+    }
+
+    public TextView getEndDateTextView() {
+        return mEndDateTextView;
+    }
+
+    public Uri getPictureUri() {
+        return mPictureUri;
+    }
+
+    public String getName() {
+        return mNameTextView.getText().toString();
+    }
+
+    public String getStartDate() {
+        return mStartDateTextView.getText().toString();
+    }
+
+    public String getEndDate() {
+        return mEndDateTextView.getText().toString();
+    }
+
+    public String getUri() {
+        return mPictureUri.toString();
+    }
+
+    public int getID() {
+        return mID;
+    }
+
+    public void setID(int ID) {
+        this.mID = ID;
     }
 }
