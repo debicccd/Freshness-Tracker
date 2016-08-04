@@ -74,4 +74,8 @@ public class FoodRowAdapter extends BaseAdapter{
     public void addRow(FoodRowView row) {
         this.mRows.add(row);
     }
+
+    public void clear() {
+        mRows.clear();
+    }
 }

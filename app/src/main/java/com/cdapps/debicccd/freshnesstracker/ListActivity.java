@@ -1,8 +1,10 @@
 package com.cdapps.debicccd.freshnesstracker;
 
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -10,8 +12,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +24,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.io.File;
@@ -31,12 +36,17 @@ import java.util.List;
 public class ListActivity extends AppCompatActivity {
     protected static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 0;
     private static final double MAX_SIZE = 150;
+    private static final String SHARED_PREF_KEY = "freshness_tracker_prefs";
+    private static final String NOTIFICATION_TIME_PREF_KEY = "notification_time";
+    private static final String RED_DAYS_PREF_KEY = "red_days";
+    private static final String YELLOW_DAYS_PREF_KEY = "yellow_days";
 
     private FoodRowAdapter mRowAdapter;
     private Context mContext;
     private Uri mPictureUri = Uri.parse("@mipmap/ic_launcher");
     private ImageButton mImageButton;
     private DBHandler mDB;
+    private SharedPreferences mSharedPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +72,8 @@ public class ListActivity extends AppCompatActivity {
         mContext = this;
 
         mDB = new DBHandler(this);
+
+        mSharedPrefs = getSharedPreferences(SHARED_PREF_KEY, this.MODE_PRIVATE);
     }
 
     @Override
@@ -75,6 +87,7 @@ public class ListActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_list, menu);
+        
         return true;
     }
 
@@ -87,10 +100,75 @@ public class ListActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            showSettings();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showSettings() {
+        final Dialog settingsDialog = new Dialog(this);
+        settingsDialog.setContentView(R.layout.settings);
+        settingsDialog.setTitle("Edit Settings");
+
+        final Button notificationTimeButton = (Button) settingsDialog.findViewById(R.id.notificatonTimeButton);
+        final EditText redEditText = (EditText) settingsDialog.findViewById(R.id.redEditText);
+        final EditText yellowEditText = (EditText) settingsDialog.findViewById(R.id.yellowEditText);
+        final Button confirmButton = (Button) settingsDialog.findViewById(R.id.confirmButton);
+        final Button cancelButton = (Button) settingsDialog.findViewById(R.id.cancelButton);
+
+        notificationTimeButton.setText(mSharedPrefs.getString(NOTIFICATION_TIME_PREF_KEY, "10:00"));
+        redEditText.setText(""+mSharedPrefs.getInt(RED_DAYS_PREF_KEY, 1));
+        yellowEditText.setText(""+mSharedPrefs.getInt(YELLOW_DAYS_PREF_KEY, 3));
+
+        notificationTimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String time = notificationTimeButton.getText().toString();
+                int h = 10;
+                int m = 0;
+                try {
+                    h = Integer.parseInt(time.split(":")[0]);
+                    m = Integer.parseInt(time.split(":")[1]);
+                } catch(Exception e){
+                    // TODO: 8/3/2016 Handle exceptions
+                }
+
+
+                TimePickerDialog tp1 = new TimePickerDialog(mContext, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        notificationTimeButton.setText(hourOfDay + ":" + minute);
+                    }
+                }, h, m, true);
+                tp1.show();
+            }
+        });
+
+        confirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences.Editor editor = mSharedPrefs.edit();
+
+                editor.putString(NOTIFICATION_TIME_PREF_KEY, notificationTimeButton.getText().toString());
+                editor.putInt(RED_DAYS_PREF_KEY, Integer.parseInt(redEditText.getText().toString()));
+                editor.putInt(YELLOW_DAYS_PREF_KEY, Integer.parseInt(yellowEditText.getText().toString()));
+
+                editor.apply();
+
+                settingsDialog.dismiss();
+            }
+        });
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingsDialog.dismiss();
+            }
+        });
+
+        settingsDialog.show();
     }
 
     protected void showAddFoodDialog(){
@@ -194,10 +272,45 @@ public class ListActivity extends AppCompatActivity {
     }
 
     private void restoreRows(){
+        mRowAdapter.clear();
         List<FoodRowView> rows = mDB.getAll();
 
         for(FoodRowView row : rows){
+            if(daysUntil(row.getEndDate()) <= mSharedPrefs.getInt(RED_DAYS_PREF_KEY, 1)) {
+                row.setBackgroundColor(ContextCompat.getColor(mContext, R.color.lightRed));
+            } else if (daysUntil(row.getEndDate()) <= mSharedPrefs.getInt(YELLOW_DAYS_PREF_KEY, 3)){
+                row.setBackgroundColor(ContextCompat.getColor(mContext, R.color.lightYellow));
+            }
             mRowAdapter.addRow(row);
         }
+    }
+
+    private int daysUntil(String end){
+        int m = 0;
+        int d = 0;
+        int y = 0;
+        try{
+            m = Integer.parseInt(end.split("/")[0])-1;
+            d = Integer.parseInt(end.split("/")[1]);
+            y = Integer.parseInt(end.split("/")[2]);
+
+            //Log.d("DAYS", m + ":" + d + ":" + y);
+        } catch(Exception e){
+            // TODO: 8/3/2016 Handle exception
+        }
+        Calendar endDate = Calendar.getInstance();
+        endDate.set(y, m, d);
+
+        int result = 0;
+
+        while(endDate.after(Calendar.getInstance())){
+            //Log.d("DAYS", "end " + endDate.getTime() + ":" + "now " + Calendar.getInstance().getTime());
+            result++;
+            endDate.add(Calendar.DAY_OF_MONTH, -1);
+        }
+
+        Log.d("DAYS", "result = " + result);
+
+        return result;
     }
 }
